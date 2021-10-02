@@ -1,0 +1,702 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <meta name="description" content="A codex of mathematical knowledge">
+    <meta name="keywords" content="math, maths, mathematics, knowledge, database, repository, codex, encyclopedia">
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"
+          integrity="sha384-zB1R0rpPzHqg7Kpt0Aljp8JPLqbXI3bhnPWROx27a9N0Ll6ZP/+DiW/UqRcLbRjq"
+          crossorigin="anonymous">
+    <script defer
+            src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"
+            integrity="sha384-y23I5Q6l+B6vatafAwxRu/0oK/79VlbSz7Q9aiSZUvyWYIYsd+qj+o24G5ZU2zJz"
+            crossorigin="anonymous">
+    </script>
+    <script defer
+            src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js">
+    </script>
+
+        <script>
+            
+    function buildMathFragment(rawText) {
+        let text = rawText;
+        if (text[0] === '"') {
+            text = text.substring(1);
+        }
+        if (text[text.length - 1] === '"') {
+            text = text.substring(0, text.length - 1);
+        }
+        text = text.replace(/([a-zA-Z0-9])\?\??/g, '$1');
+        const fragment = document.createDocumentFragment();
+        let buffer = '';
+        let i = 0;
+        while (i < text.length) {
+            if (text[i] === '$' && text[i+1] === '$' && text[i+2] === '$') {
+                i += 3; // skip over the $s
+                fragment.appendChild(document.createTextNode(buffer));
+                buffer = '';
+
+                const span = document.createElement('span');
+                let math = '';
+                while (i < text.length &&
+                    !(text[i] === '$' && text[i+1] === '$' && text[i+2] === '$')) {
+                    math += text[i++];
+                }
+                if (text[i] === '$') {
+                    i++; // move past the $
+                }
+                if (text[i] === '$') {
+                    i++; // move past the second $
+                }
+                if (text[i] === '$') {
+                    i++; // move past the third $
+                }
+                try {
+                    katex.render(math, span, {
+                        throwOnError: true,
+                        displayMode: false
+                    });
+                } catch {
+                    span.appendChild(document.createTextNode(math));
+                }
+                fragment.appendChild(span);
+            } else if (text[i] === '\\' && text[i+1] === '[') {
+                i += 2; // skip over \ and [
+                fragment.appendChild(document.createTextNode(buffer));
+                buffer = '';
+
+                const span = document.createElement('span');
+                span.className = 'display-mode';
+                let math = '';
+                while (i < text.length &&
+                    !(text[i] === '\\' && text[i+1] === ']')) {
+                    math += text[i++];
+                }
+                if (text[i] === '\\') {
+                    i++; // move past the \
+                }
+                if (text[i] === ']') {
+                    i++; // move past the ]
+                }
+                try {
+                    katex.render(math, span, {
+                        throwOnError: true,
+                        displayMode: true
+                    });
+                } catch {
+                    span.appendChild(document.createTextNode(math));
+                }
+                fragment.appendChild(span);
+            } else if (text[i] === '\\' && text[i+1] === '(') {
+                i += 2; // skip over \ and ()
+                fragment.appendChild(document.createTextNode(buffer));
+                buffer = '';
+
+                const span = document.createElement('span');
+                let math = '';
+                while (i < text.length &&
+                    !(text[i] === '\\' && text[i+1] === ')')) {
+                    math += text[i++];
+                }
+                if (text[i] === '\\') {
+                    i++; // move past the \
+                }
+                if (text[i] === ')') {
+                    i++; // move past the )
+                }
+                try {
+                    katex.render(math, span, {
+                        throwOnError: true,
+                        displayMode: false
+                    });
+                } catch {
+                    span.appendChild(document.createTextNode(math));
+                }
+                fragment.appendChild(span);
+            } else if (text[i] === '$' && text[i+1] === '$') {
+                i += 2; // skip over $ and $
+                fragment.appendChild(document.createTextNode(buffer));
+                buffer = '';
+
+                const span = document.createElement('span');
+                span.className = 'display-mode';
+                let math = '';
+                while (i < text.length &&
+                    !(text[i] === '$' && text[i+1] === '$')) {
+                    math += text[i++];
+                }
+                if (text[i] === '$') {
+                    i++; // move past the $
+                }
+                if (text[i] === '$') {
+                    i++; // move past the $
+                }
+                try {
+                    katex.render(math, span, {
+                        throwOnError: true,
+                        displayMode: true
+                    });
+                } catch {
+                    span.appendChild(document.createTextNode(math));
+                }
+                fragment.appendChild(span);
+            } else if (text[i] === '$') {
+                i++; // skip over the $
+                fragment.appendChild(document.createTextNode(buffer));
+                buffer = '';
+
+                const span = document.createElement('span');
+                let math = '';
+                while (i < text.length &&
+                     text[i] !== '$') {
+                    math += text[i++];
+                }
+                if (text[i] === '$') {
+                    i++; // move past the $
+                }
+                try {
+                    katex.render(math, span, {
+                        throwOnError: true,
+                        displayMode: false
+                    });
+                } catch {
+                    span.appendChild(document.createTextNode(math));
+                }
+                fragment.appendChild(span);
+            } else {
+                buffer += text[i++];
+            }
+        }
+
+        if (buffer.length > 0) {
+            fragment.appendChild(document.createTextNode(buffer));
+        }
+
+        return fragment;
+    }
+
+    function render(node) {
+        if (node.className && node.className.indexOf && node.className.indexOf('no-render') >= 0) {
+            return;
+        }
+
+        let isInWritten = false;
+        const parent = node.parentNode;
+        if (node.className === 'mathlingua') {
+            for (let i=0; i<node.childNodes.length; i++) {
+                const n = node.childNodes[i];
+                if (n && n.className === 'mathlingua-header' &&
+                    n.textContent === 'written:') {
+                    isInWritten = true;
+                    break;
+                }
+            }
+        }
+
+        for (let i = 0; i < node.childNodes.length; i++) {
+            const child = node.childNodes[i];
+
+            // node is an element node => nodeType === 1
+            // node is an attribute node => nodeType === 2
+            // node is a text node => nodeType === 3
+            // node is a comment node => nodeType === 8
+            if (child.nodeType === 3) {
+                let text = child.textContent;
+                if (text.trim()) {
+                    if (isInWritten) {
+                        // if the text is in a written: section
+                        // turn "some text" to $$$some text$$$
+                        // so the text is in math mode
+                        if (text[0] === '"') {
+                            text = text.substring(1);
+                        }
+                        if (text[text.length - 1] === '"') {
+                            text = text.substring(0, text.length - 1);
+                        }
+                        text = '$$$' + text + '$$$';
+                    }
+                    const fragment = buildMathFragment(text);
+                    i += fragment.childNodes.length - 1;
+                    node.replaceChild(fragment, child);
+                }
+            } else if (child.nodeType === 1) {
+                render(child);
+            }
+        }
+    }
+
+
+            
+    function flipEntity(id) {
+        const renEl = document.getElementById('rendered-' + id);
+        const litEl = document.getElementById('literal-' + id);
+        if (renEl && litEl) {
+            if (renEl.className === 'mathlingua-rendered-visible') {
+                renEl.className = 'mathlingua-rendered-hidden';
+                litEl.className = 'mathlingua-literal-visible';
+            } else {
+                renEl.className = 'mathlingua-rendered-visible';
+                litEl.className = 'mathlingua-literal-hidden';
+            }
+        }
+    }
+
+    function toggleProof(id) {
+        const proofEl = document.getElementById('proof-' + id);
+        const iconEl = document.getElementById('icon-' + id);
+        if (proofEl) {
+            if (proofEl.className === 'mathlingua-proof-hidden') {
+                proofEl.className = 'mathlingua-proof-shown';
+                if (iconEl) {
+                    iconEl.innerHTML = '&#9652;';
+                }
+            } else {
+                proofEl.className = 'mathlingua-proof-hidden';
+                if (iconEl) {
+                    iconEl.innerHTML = '&#9662;';
+                }
+            }
+        }
+    }
+
+
+            function initPage() {
+                const el = document.getElementById('__main_content__');
+                if (el) {
+                    render(el);
+                }
+            }
+        </script>
+        <style>
+            
+    .content {
+        padding-top: 1.5em;
+        padding-bottom: 1em;
+        margin-top: 2.5em;
+        margin-bottom: 1em;
+        margin-left: auto; /* for centering content */
+        margin-right: auto; /* for centering content */
+        font-size: 1em;
+        width: 50em;
+        background-color: white;
+        border: solid;
+        border-width: 1px;
+        border-color: rgba(210, 210, 210);
+        border-radius: 2px;
+        box-shadow: rgba(0, 0, 0, 0.1) 0px 3px 10px,
+                    inset 0  0 0 0 rgba(240, 240, 240, 0.5);
+    }
+
+    @media screen and (max-width: 500px) {
+        .content {
+            width: 99%;
+            margin-top: 2.5vh;
+            margin-bottom: 0;
+        }
+    }
+
+    body {
+        background-color: #dddddd;
+        padding-bottom: 1em;
+    }
+
+    hr {
+        border: 0.5px solid #efefef;
+    }
+
+    h1, h2, h3, h4 {
+        color: #0055bb;
+        text-align: center;
+    }
+
+    p {
+        text-align: left;
+        text-indent: 0;
+    }
+
+    .mathlingua-flip-icon {
+        position: relative;
+        top: 0;
+        left: 100%;
+        border: none;
+        color: #aaaaaa;
+        background: #ffffff;
+        margin: 0;
+        padding: 0;
+        font-size: 110%;
+    }
+
+    .mathlingua-rendered-visible {
+        display: block;
+    }
+
+    .mathlingua-rendered-hidden {
+        display: none;
+    }
+
+    .mathlingua-literal-visible {
+        display: block;
+    }
+
+    .mathlingua-literal-hidden {
+        display: none;
+    }
+
+    .mathlingua-home {
+        width: 80%;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .mathlingua-dir-item-hidden {
+        display: none;
+    }
+
+    .mathlingua-dir-item-shown {
+        display: block;
+    }
+
+    .mathlingua-home-item {
+        font-weight: bold;
+        display: block;
+        margin-top: -1.25ex;
+        margin-bottom: -1ex;
+    }
+
+    .mathlingua-list-dir-item {
+        font-weight: bold;
+        display: block;
+        margin-top: -0.5ex;
+        margin-bottom: -0.5ex;
+    }
+
+    .mathlingua-list-file-item {
+        display: block;
+        margin-top: -0.5ex;
+        margin-bottom: -0.5ex;
+    }
+
+    .mathlingua-top-level {
+        overflow-y: hidden;
+        overflow-x: auto;
+        background-color: white;
+        border: solid;
+        border-width: 1px;
+        border-radius: 2px;
+        padding-top: 0;
+        padding-bottom: 1em;
+        padding-left: 1.1em;
+        padding-right: 1.1em;
+        max-width: 75%;
+        width: max-content;
+        margin-left: auto; /* for centering content */
+        margin-right: auto; /* for centering content */
+        margin-top: 2.25em;
+        margin-bottom: 2.25em;
+        border-color: rgba(230, 230, 230);
+        border-radius: 2px;
+        box-shadow: rgba(0, 0, 0, 0.1) 0px 3px 10px,
+                    inset 0  0 0 0 rgba(240, 240, 240, 0.5);
+    }
+
+    .mathlingua-block-comment {
+        font-family: Georgia, 'Times New Roman', Times, serif;
+    }
+
+    .mathlingua-block-comment-top-level {
+        font-family: Georgia, 'Times New Roman', Times, serif;
+        line-height: 1.3;
+        text-align: left;
+        text-indent: 0;
+        background-color: #ffffff;
+        max-width: 80%;
+        width: 80%;
+        margin-left: auto; /* for centering content */
+        margin-right: auto; /* for centering content */
+    }
+
+    .end-mathlingua-top-level {
+        padding-top: 0.5em;
+        margin: 0;
+    }
+
+    .mathlingua-topic-group-id {
+        display: block;
+        padding: 0 0 1em 0;
+        font-family: monospace;
+        text-align: center;
+        color: #5500aa;
+    }
+
+    .mathlingua-topic-name {
+        display: block;
+        padding: 0 0 0.2em 0;
+        font-family: Georgia, 'Times New Roman', Times, serif;
+        font-weight: bold;
+        text-align: center;
+        color: #0055bb;
+    }
+
+    .mathlingua-topic-content {
+        display: block;
+        padding: 0 0 1.2em 0;
+        margin: 0.2em 0 -1.2em 0;
+        font-family: Georgia, 'Times New Roman', Times, serif;
+        line-height: 1.3;
+        color: #000000;
+    }
+
+    .mathlingua-overview {
+        display: block;
+        padding: 0.5em 0 0.5em 0;
+        font-family: Georgia, 'Times New Roman', Times, serif;
+        line-height: 1.3;
+        color: #000000;
+        margin-top: -2ex;
+        margin-bottom: -2ex;
+    }
+
+    .mathlingua-resources-header {
+        display: block;
+        color: #0055bb;
+        text-shadow: 0px 1px 0px rgba(255,255,255,0), 0px 0.4px 0px rgba(0,0,0,0.2);
+        font-family: Georgia, 'Times New Roman', Times, serif;
+        padding-top: 0.25em;
+    }
+
+    .mathlingua-resources-item {
+        display: block;
+        font-family: Georgia, 'Times New Roman', Times, serif;
+        padding: 0.1em 0 0.1em 0;
+    }
+    
+    .mathlingua-topics-header {
+        display: block;
+        color: #0055bb;
+        text-shadow: 0px 1px 0px rgba(255,255,255,0), 0px 0.4px 0px rgba(0,0,0,0.2);
+        font-family: Georgia, 'Times New Roman', Times, serif;
+        padding-top: 0.5em;
+    }
+
+    .mathlingua-topic-item {
+        display: block;
+        font-family: Georgia, 'Times New Roman', Times, serif;
+        padding: 0.1em 0 0.1em 0;
+    }
+
+    .mathlingua-related-header {
+        display: block;
+        color: #0055bb;
+        text-shadow: 0px 1px 0px rgba(255,255,255,0), 0px 0.4px 0px rgba(0,0,0,0.2);
+        font-family: Georgia, 'Times New Roman', Times, serif;
+        padding-top: 0.5em;
+    }
+
+    .mathlingua-related-item {
+        display: block;
+        font-family: Georgia, 'Times New Roman', Times, serif;
+        padding: 0.1em 0 0.1em 0;
+    }
+
+    .mathlingua-foundation-header {
+        display: block;
+        font-family: Georgia, 'Times New Roman', Times, serif;
+        text-align: center;
+        font-weight: normal;
+        padding-bottom: 1ex;
+        color: #777777;
+    }
+
+    .mathlingua {
+        font-family: monospace;
+    }
+
+    .mathlingua-proof-icon {
+        float:right;
+        color: #aaaaaa;
+        cursor: default;
+    }
+
+    .mathlingua-proof-shown {
+        display: block;
+        margin-top: -0.6ex;
+    }
+
+    .mathlingua-proof-hidden {
+        display: none;
+        margin-top: -0.6ex;
+    }
+
+    .mathlingua-proof-header {
+        display: block;
+        color: #0055bb;
+        text-shadow: 0px 1px 0px rgba(255,255,255,0), 0px 0.4px 0px rgba(0,0,0,0.2);
+        font-family: Georgia, 'Times New Roman', Times, serif;
+    }
+
+    .mathlingua-header {
+        color: #0055bb;
+        text-shadow: 0px 1px 0px rgba(255,255,255,0), 0px 0.4px 0px rgba(0,0,0,0.2);
+        font-family: Georgia, 'Times New Roman', Times, serif;
+    }
+
+    .mathlingua-header-literal {
+        color: #0055bb;
+        text-shadow: 0px 1px 0px rgba(255,255,255,0), 0px 0.4px 0px rgba(0,0,0,0.2);
+        font-family: monospace;
+    }
+
+    .mathlingua-whitespace {
+        padding: 0;
+        margin: 0;
+        margin-left: 1ex;
+    }
+
+    .mathlingua-id {
+        color: #5500aa;
+        overflow-x: scroll;
+    }
+
+    .mathlingua-text {
+        color: #000000;
+        display: inline-block;
+        font-family: Georgia, 'Times New Roman', Times, serif;
+        margin-top: -1.6ex;
+        margin-bottom: -1.6ex;
+    }
+
+    .mathlingua-text-no-render {
+        color: #000000;
+        display: inline-block;
+        font-family: Georgia, 'Times New Roman', Times, serif;
+        margin-top: -1.6ex;
+        margin-bottom: -1.6ex;
+    }
+
+    .literal-mathlingua-text {
+        color: #386930;
+        display: inline;
+        font-family: monospace;
+        line-height: 1.3;
+    }
+
+    .literal-mathlingua-text-no-render {
+        color: #386930;
+        display: inline;
+        font-family: monospace;
+        line-height: 1.3;
+    }
+
+    .mathlingua-url {
+        color: #0000aa;
+        text-decoration: none;
+        display: inline-block;
+        font-family: Georgia, 'Times New Roman', Times, serif;
+    }
+
+    .mathlingua-link {
+        color: #0000aa;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .mathlingua-statement-no-render {
+        color: #007377;
+    }
+
+    .mathlingua-statement-container {
+        display: inline;
+    }
+
+    .literal-mathlingua-statement {
+        color: #007377;
+    }
+
+    .mathlingua-dropdown-menu-shown {
+        position: absolute;
+        display: block;
+        z-index: 1;
+        background-color: #ffffff;
+        box-shadow: rgba(0, 0, 0, 0.5) 0px 3px 10px,
+                    inset 0  0 10px 0 rgba(200, 200, 200, 0.25);
+        border: solid;
+        border-width: 1px;
+        border-radius: 0px;
+        border-color: rgba(200, 200, 200);
+    }
+
+    .mathlingua-dropdown-menu-hidden {
+        display: none;
+    }
+
+    .mathlingua-dropdown-menu-item {
+        display: block;
+        margin: 0.75ex;
+    }
+
+    .mathlingua-dropdown-menu-item:hover {
+        font-style: italic;
+    }
+
+    .mathlingua-called {
+        font-weight: bold;
+        display: table;
+        margin-top: -1em;
+        margin-left: auto;
+        margin-bottom: -1ex;
+        margin-right: auto;
+    }
+
+    .display-mode {
+        margin-left: auto;
+        margin-right: auto;
+        width: max-content;
+        display: block;
+        padding-top: 2ex;
+        padding-bottom: 3ex;
+    }
+
+    .katex {
+        font-size: 1em;
+    }
+
+    .katex-display {
+        display: contents;
+    }
+
+    .katex-display > .katex {
+        display: contents;
+    }
+
+    .katex-display > .katex > .katex-html {
+        display: contents;
+    }
+
+        </style>
+    </head>
+    <body onload="initPage()">
+        <div class="content" id="__main_content__">
+            <div class='mathlingua-block-comment-top-level'><span class='mathlingua'><span class='mathlingua-block-comment'>  <h1>An Example</h1> 
+ </span></span></div><div class='mathlingua-block-comment-top-level'><span class='mathlingua'><span class='mathlingua-block-comment'>   
+  <div class='mathlingua-top-level-comment-block'><span class='mathlingua'><span class='mathlingua'><div id='c18fb1f2-afc8-488b-a285-0406b0525373-CUSTOM_SUFFIX'><div class='mathlingua-top-level'><span class='mathlingua-id'>[\integer]</span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>Defines:</span><span class='mathlingua-whitespace'></span><span class='mathlingua'><span class='mathlingua-argument-no-render'>n</span></span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>means:</span><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class="literal-mathlingua-text-no-render"> "$n$ is one of $\ldots, -1, 0, 1, \ldots$" </span></span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>written:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class="literal-mathlingua-text-no-render"> "\textrm{integer}" </span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>called:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class="literal-mathlingua-text-no-render"> "integer" </span></span><div class='end-mathlingua-top-level'></div></div></div></span></span></div>    
+ </span></span></div><div class='mathlingua-top-level'><div><button class='mathlingua-flip-icon' onclick="flipEntity('4b40b6c9-753f-4e1e-bb72-6fc770d0074a')">&#8226;</button><div id='rendered-4b40b6c9-753f-4e1e-bb72-6fc770d0074a' class='mathlingua-rendered-visible'><span class='mathlingua-data'><span class='mathlingua-called'> <p>Integer</p> </span><span class='mathlingua'><div id='6cecf802-a497-443d-8bc4-fe6f61af6ff5-CUSTOM_SUFFIX'><div class='mathlingua-top-level'><span class='mathlingua-id'>[\integer]</span><br/><span class='mathlingua'><span class='mathlingua-header'>Defines:</span><span class='mathlingua-whitespace'></span><span class='mathlingua'><span class='mathlingua-argument'>$$$n$$$</span></span></span><br/><span class='mathlingua'><span class='mathlingua-header'>means:</span><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-text' title=" <p>$n$ is one of $\ldots, -1, 0, 1, \ldots$</p> ">  <p>$n$ is one of $\ldots, -1, 0, 1, \ldots$</p> 
+ </span></span></span><br/><span class='mathlingua'><span class='mathlingua-header'>written:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span>"\textrm{integer}"</span><br/><span class='mathlingua'></span><div class='end-mathlingua-top-level'></div></div></div></span></span></div><div id='literal-4b40b6c9-753f-4e1e-bb72-6fc770d0074a' class='mathlingua-literal-hidden'><span class='mathlingua'><div id='d13e2483-dd73-4d7a-9904-bdd0ccf77a33-CUSTOM_SUFFIX'><div class='mathlingua-top-level'><span class='mathlingua-id'>[\integer]</span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>Defines:</span><span class='mathlingua-whitespace'></span><span class='mathlingua'><span class='mathlingua-argument-no-render'>n</span></span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>means:</span><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class="literal-mathlingua-text-no-render"> "$n$ is one of $\ldots, -1, 0, 1, \ldots$" </span></span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>written:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class="literal-mathlingua-text-no-render"> "\textrm{integer}" </span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>called:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class="literal-mathlingua-text-no-render"> "integer" </span></span><div class='end-mathlingua-top-level'></div></div></div></span></div></div></div><div class='mathlingua-block-comment-top-level'><span class='mathlingua'><span class='mathlingua-block-comment'>   
+  <div class='mathlingua-top-level-comment-block'><span class='mathlingua'><span class='mathlingua'><div id='ff90288e-90ac-4134-9618-d6e1003dce27-CUSTOM_SUFFIX'><div class='mathlingua-top-level'><span class='mathlingua-id'>[a \integer.*/ b]</span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>Defines:</span><span class='mathlingua-whitespace'></span><span class='mathlingua'><span class='mathlingua-argument-no-render'>c</span></span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>when:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement--4805249243161334185-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'a, b is \integer'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement--4805249243161334185-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer', 'statement--4805249243161334185-CUSTOM_SUFFIX')">\integer</a></div></span></span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>means:</span><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class="literal-mathlingua-text-no-render"> "$c$ is the product of $a$ and $b$" </span></span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>written:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class="literal-mathlingua-text-no-render"> "a? b?" </span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>called:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class="literal-mathlingua-text-no-render"> "product of $a?$ and $b?$" </span></span><div class='end-mathlingua-top-level'></div></div></div></span></span></div>    
+ </span></span></div><div class='mathlingua-top-level'><div><button class='mathlingua-flip-icon' onclick="flipEntity('7e11b4ac-4cc2-4bbd-92d3-58055510892e')">&#8226;</button><div id='rendered-7e11b4ac-4cc2-4bbd-92d3-58055510892e' class='mathlingua-rendered-visible'><span class='mathlingua-data'><span class='mathlingua-called'> <p>Product Of $a?$ And $b?$</p> </span><span class='mathlingua'><div id='c13638d1-cd7f-42f8-bbac-07caec96594b-CUSTOM_SUFFIX'><div class='mathlingua-top-level'><span class='mathlingua-id'>[a \integer.*/ b]</span><br/><span class='mathlingua'><span class='mathlingua-header'>Defines:</span><span class='mathlingua-whitespace'></span><span class='mathlingua'><span class='mathlingua-argument'>$$$c$$$</span></span></span><br/><span class='mathlingua'><span class='mathlingua-header'>when:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement-4447467851925675563-CUSTOM_SUFFIX')"><span class='mathlingua-statement' title='a, b is \integer'>$$$a, b$$$<span class='mathlingua-whitespace'></span><span class='mathlingua-is'>is</span><span class='mathlingua-whitespace'></span>$$$\textrm{integer}$$$</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement-4447467851925675563-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer', 'statement-4447467851925675563-CUSTOM_SUFFIX')">\integer</a></div></span></span></span><br/><span class='mathlingua'><span class='mathlingua-header'>means:</span><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-text' title=" <p>$c$ is the product of $a$ and $b$</p> ">  <p>$c$ is the product of $a$ and $b$</p> 
+ </span></span></span><br/><span class='mathlingua'><span class='mathlingua-header'>written:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span>"a? b?"</span><br/><span class='mathlingua'></span><div class='end-mathlingua-top-level'></div></div></div></span></span></div><div id='literal-7e11b4ac-4cc2-4bbd-92d3-58055510892e' class='mathlingua-literal-hidden'><span class='mathlingua'><div id='d8e92a3d-8dfe-40aa-ad5c-bd54a57637b0-CUSTOM_SUFFIX'><div class='mathlingua-top-level'><span class='mathlingua-id'>[a \integer.*/ b]</span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>Defines:</span><span class='mathlingua-whitespace'></span><span class='mathlingua'><span class='mathlingua-argument-no-render'>c</span></span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>when:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement-2426664868443806711-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'a, b is \integer'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement-2426664868443806711-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer', 'statement-2426664868443806711-CUSTOM_SUFFIX')">\integer</a></div></span></span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>means:</span><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class="literal-mathlingua-text-no-render"> "$c$ is the product of $a$ and $b$" </span></span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>written:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class="literal-mathlingua-text-no-render"> "a? b?" </span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>called:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class="literal-mathlingua-text-no-render"> "product of $a?$ and $b?$" </span></span><div class='end-mathlingua-top-level'></div></div></div></span></div></div></div><div class='mathlingua-block-comment-top-level'><span class='mathlingua'><span class='mathlingua-block-comment'>   
+  <div class='mathlingua-top-level-comment-block'><span class='mathlingua'><span class='mathlingua'><div id='cac26d1b-2a12-4c71-9825-c8e1f4475719-CUSTOM_SUFFIX'><div class='mathlingua-top-level'><span class='mathlingua-id'>[a \integer.>/ b]</span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>States:</span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>that:</span><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class="literal-mathlingua-text-no-render"> "$a$ is larger than $b$" </span></span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>written:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class="literal-mathlingua-text-no-render"> "a? > b?" </span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>called:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class="literal-mathlingua-text-no-render"> "$a?$ is greater than $b?$" </span></span><div class='end-mathlingua-top-level'></div></div></div></span></span></div>    
+ </span></span></div><div class='mathlingua-top-level'><div><button class='mathlingua-flip-icon' onclick="flipEntity('615c08d6-eb5d-4a1d-8be9-9f215f187baf')">&#8226;</button><div id='rendered-615c08d6-eb5d-4a1d-8be9-9f215f187baf' class='mathlingua-rendered-visible'><span class='mathlingua-data'><span class='mathlingua-called'> <p>$a?$ Is Greater Than $b?$</p> </span><span class='mathlingua'><div id='18426bc7-df9c-48dc-89a8-5df9b9ef9eb9-CUSTOM_SUFFIX'><div class='mathlingua-top-level'><span class='mathlingua-id'>[a \integer.>/ b]</span><br/><span class='mathlingua'><span class='mathlingua-header'>States:</span></span><br/><span class='mathlingua'><span class='mathlingua-header'>that:</span><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-text' title=" <p>$a$ is larger than $b$</p> ">  <p>$a$ is larger than $b$</p> 
+ </span></span></span><br/><span class='mathlingua'><span class='mathlingua-header'>written:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span>"a? > b?"</span><br/><span class='mathlingua'></span><div class='end-mathlingua-top-level'></div></div></div></span></span></div><div id='literal-615c08d6-eb5d-4a1d-8be9-9f215f187baf' class='mathlingua-literal-hidden'><span class='mathlingua'><div id='c6e1bfbb-269f-4c32-b997-dcc928e90f91-CUSTOM_SUFFIX'><div class='mathlingua-top-level'><span class='mathlingua-id'>[a \integer.>/ b]</span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>States:</span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>that:</span><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class="literal-mathlingua-text-no-render"> "$a$ is larger than $b$" </span></span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>written:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class="literal-mathlingua-text-no-render"> "a? > b?" </span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>called:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class="literal-mathlingua-text-no-render"> "$a?$ is greater than $b?$" </span></span><div class='end-mathlingua-top-level'></div></div></div></span></div></div></div><div class='mathlingua-block-comment-top-level'><span class='mathlingua'><span class='mathlingua-block-comment'>   
+  <div class='mathlingua-top-level-comment-block'><span class='mathlingua'><span class='mathlingua'><div id='5f53c6e1-1bf4-4da5-a37b-cc09d8208552-CUSTOM_SUFFIX'><div class='mathlingua-top-level'><span class='mathlingua-id'>[a \integer.|/ b]</span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>States:</span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>when:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement-1052519410680382095-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'a, b is \integer'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement-1052519410680382095-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer', 'statement-1052519410680382095-CUSTOM_SUFFIX')">\integer</a></div></span></span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>that:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class='mathlingua-header-literal'>exists:</span><span class='mathlingua-whitespace'></span><span class='mathlingua'><span class='mathlingua-argument-no-render'>d</span></span></span><br/><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-header-literal'>suchThat:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement--2927687363972807454-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'d is \integer'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement--2927687363972807454-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer', 'statement--2927687363972807454-CUSTOM_SUFFIX')">\integer</a></div></span><br/><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement-8029715974004125284-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'b = d*a'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement-8029715974004125284-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('*', 'statement-8029715974004125284-CUSTOM_SUFFIX')">*</a></div></span></span></span></span></span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>using:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement--8934999279931401631-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'a * b := a \integer.*/ b'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement--8934999279931401631-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('*', 'statement--8934999279931401631-CUSTOM_SUFFIX')">*</a><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer.*', 'statement--8934999279931401631-CUSTOM_SUFFIX')">\integer.*</a></div></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>written:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class="literal-mathlingua-text-no-render"> "a? | b?" </span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>called:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class="literal-mathlingua-text-no-render"> "$a?$ divides $b?$" </span></span><div class='end-mathlingua-top-level'></div></div></div></span></span></div>    
+ </span></span></div><div class='mathlingua-top-level'><div><button class='mathlingua-flip-icon' onclick="flipEntity('7ed95f14-8fd6-469c-9910-5e8e70d0dcec')">&#8226;</button><div id='rendered-7ed95f14-8fd6-469c-9910-5e8e70d0dcec' class='mathlingua-rendered-visible'><span class='mathlingua-data'><span class='mathlingua-called'> <p>$a?$ Divides $b?$</p> </span><span class='mathlingua'><div id='3ed66856-f711-4e72-bca7-eafa49fcc619-CUSTOM_SUFFIX'><div class='mathlingua-top-level'><span class='mathlingua-id'>[a \integer.|/ b]</span><br/><span class='mathlingua'><span class='mathlingua-header'>States:</span></span><br/><span class='mathlingua'><span class='mathlingua-header'>when:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement-3626274993275359226-CUSTOM_SUFFIX')"><span class='mathlingua-statement' title='a, b is \integer'>$$$a, b$$$<span class='mathlingua-whitespace'></span><span class='mathlingua-is'>is</span><span class='mathlingua-whitespace'></span>$$$\textrm{integer}$$$</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement-3626274993275359226-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer', 'statement-3626274993275359226-CUSTOM_SUFFIX')">\integer</a></div></span></span></span><br/><span class='mathlingua'><span class='mathlingua-header'>that:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class='mathlingua-header'>exists:</span><span class='mathlingua-whitespace'></span><span class='mathlingua'><span class='mathlingua-argument'>$$$d$$$</span></span></span><br/><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-header'>suchThat:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement--4481758995786969158-CUSTOM_SUFFIX')"><span class='mathlingua-statement' title='d is \integer'>$$$d$$$<span class='mathlingua-whitespace'></span><span class='mathlingua-is'>is</span><span class='mathlingua-whitespace'></span>$$$\textrm{integer}$$$</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement--4481758995786969158-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer', 'statement--4481758995786969158-CUSTOM_SUFFIX')">\integer</a></div></span><br/><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement-4828215054832639024-CUSTOM_SUFFIX')"><span class='mathlingua-statement' title='b = d*a'>$$$b = d a$$$</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement-4828215054832639024-CUSTOM_SUFFIX'></div></span></span></span></span></span></span><br/><span class='mathlingua'><span class='mathlingua-header'>using:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement-3288654326179102825-CUSTOM_SUFFIX')"><span class="mathlingua-statement">a * b := a \integer.*/ b</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement-3288654326179102825-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer.*', 'statement-3288654326179102825-CUSTOM_SUFFIX')">\integer.*</a></div></span><br/><span class='mathlingua'><span class='mathlingua-header'>written:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span>"a? | b?"</span><br/><span class='mathlingua'></span><div class='end-mathlingua-top-level'></div></div></div></span></span></div><div id='literal-7ed95f14-8fd6-469c-9910-5e8e70d0dcec' class='mathlingua-literal-hidden'><span class='mathlingua'><div id='45e1fd01-7324-4871-8dd1-3b312f65d180-CUSTOM_SUFFIX'><div class='mathlingua-top-level'><span class='mathlingua-id'>[a \integer.|/ b]</span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>States:</span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>when:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement-8783032719811401924-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'a, b is \integer'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement-8783032719811401924-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer', 'statement-8783032719811401924-CUSTOM_SUFFIX')">\integer</a></div></span></span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>that:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class='mathlingua-header-literal'>exists:</span><span class='mathlingua-whitespace'></span><span class='mathlingua'><span class='mathlingua-argument-no-render'>d</span></span></span><br/><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-header-literal'>suchThat:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement-4403246979467829993-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'d is \integer'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement-4403246979467829993-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer', 'statement-4403246979467829993-CUSTOM_SUFFIX')">\integer</a></div></span><br/><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement--5071863629931934155-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'b = d*a'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement--5071863629931934155-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('*', 'statement--5071863629931934155-CUSTOM_SUFFIX')">*</a></div></span></span></span></span></span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>using:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement--148858549186397838-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'a * b := a \integer.*/ b'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement--148858549186397838-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('*', 'statement--148858549186397838-CUSTOM_SUFFIX')">*</a><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer.*', 'statement--148858549186397838-CUSTOM_SUFFIX')">\integer.*</a></div></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>written:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class="literal-mathlingua-text-no-render"> "a? | b?" </span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>called:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class="literal-mathlingua-text-no-render"> "$a?$ divides $b?$" </span></span><div class='end-mathlingua-top-level'></div></div></div></span></div></div></div><div class='mathlingua-block-comment-top-level'><span class='mathlingua'><span class='mathlingua-block-comment'>   
+  <div class='mathlingua-top-level-comment-block'><span class='mathlingua'><span class='mathlingua'><div id='6bdf0ee9-cde5-4b5d-be6d-a0bbd050b5fd-CUSTOM_SUFFIX'><div class='mathlingua-top-level'><span class='mathlingua-id'>[\prime]</span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>Defines:</span><span class='mathlingua-whitespace'></span><span class='mathlingua'><span class='mathlingua-argument-no-render'>p</span></span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>means:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement--6059534687245549837-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'p is \integer'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement--6059534687245549837-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer', 'statement--6059534687245549837-CUSTOM_SUFFIX')">\integer</a></div></span><br/><span class='mathlingua'><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement--5618466899327120516-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'p > 1'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement--5618466899327120516-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('>', 'statement--5618466899327120516-CUSTOM_SUFFIX')">></a></div></span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class='mathlingua-header-literal'>forAll:</span><span class='mathlingua-whitespace'></span><span class='mathlingua'><span class='mathlingua-argument-no-render'>a</span></span><span class='mathlingua-comma'>,</span><span class='mathlingua-whitespace'></span><span class='mathlingua'><span class='mathlingua-argument-no-render'>b</span></span></span><br/><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-header-literal'>suchThat:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement--7219816111671624161-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'a, b is \integer'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement--7219816111671624161-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer', 'statement--7219816111671624161-CUSTOM_SUFFIX')">\integer</a></div></span></span></span><br/><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-header-literal'>then:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class='mathlingua-header-literal'>if:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement-6393408364292088703-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'p | a \integer.*/ b'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement-6393408364292088703-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('|', 'statement-6393408364292088703-CUSTOM_SUFFIX')">|</a><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer.*', 'statement-6393408364292088703-CUSTOM_SUFFIX')">\integer.*</a></div></span></span></span><br/><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-header-literal'>then:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class='mathlingua-header-literal'>or:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement-6012620126568775703-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'p | a'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement-6012620126568775703-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('|', 'statement-6012620126568775703-CUSTOM_SUFFIX')">|</a></div></span><br/><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement--6497088035391100495-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'p | b'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement--6497088035391100495-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('|', 'statement--6497088035391100495-CUSTOM_SUFFIX')">|</a></div></span></span></span></span></span></span></span></span></span></span></span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>using:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement-6082457837715419785-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'a * b := a \integer.*/ b'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement-6082457837715419785-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('*', 'statement-6082457837715419785-CUSTOM_SUFFIX')">*</a><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer.*', 'statement-6082457837715419785-CUSTOM_SUFFIX')">\integer.*</a></div><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement-6082457837715419786-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'a | b := a \integer.|/ b'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement-6082457837715419786-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('|', 'statement-6082457837715419786-CUSTOM_SUFFIX')">|</a><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer.|', 'statement-6082457837715419786-CUSTOM_SUFFIX')">\integer.|</a></div><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement-6082457837715419787-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'a > b := a \integer.>/ b'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement-6082457837715419787-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('>', 'statement-6082457837715419787-CUSTOM_SUFFIX')">></a><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer.>', 'statement-6082457837715419787-CUSTOM_SUFFIX')">\integer.></a></div></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>written:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class="literal-mathlingua-text-no-render"> "\textrm{prime}" </span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>called:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class="literal-mathlingua-text-no-render"> "prime" </span></span><div class='end-mathlingua-top-level'></div></div></div></span></span></div>    
+ </span></span></div><div class='mathlingua-top-level'><div><button class='mathlingua-flip-icon' onclick="flipEntity('60f895a9-3c56-4d1f-a3f2-32cba14e4dc7')">&#8226;</button><div id='rendered-60f895a9-3c56-4d1f-a3f2-32cba14e4dc7' class='mathlingua-rendered-visible'><span class='mathlingua-data'><span class='mathlingua-called'> <p>Prime</p> </span><span class='mathlingua'><div id='cc2d97fc-68b8-45d4-909e-b682601a9678-CUSTOM_SUFFIX'><div class='mathlingua-top-level'><span class='mathlingua-id'>[\prime]</span><br/><span class='mathlingua'><span class='mathlingua-header'>Defines:</span><span class='mathlingua-whitespace'></span><span class='mathlingua'><span class='mathlingua-argument'>$$$p$$$</span></span></span><br/><span class='mathlingua'><span class='mathlingua-header'>means:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement--4771040830144322946-CUSTOM_SUFFIX')"><span class='mathlingua-statement' title='p is \integer'>$$$p$$$<span class='mathlingua-whitespace'></span><span class='mathlingua-is'>is</span><span class='mathlingua-whitespace'></span>$$$\textrm{integer}$$$</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement--4771040830144322946-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer', 'statement--4771040830144322946-CUSTOM_SUFFIX')">\integer</a></div></span><br/><span class='mathlingua'><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement-6056707670208961690-CUSTOM_SUFFIX')"><span class='mathlingua-statement' title='p > 1'>$$$p > 1$$$</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement-6056707670208961690-CUSTOM_SUFFIX'></div></span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class='mathlingua-header'>forAll:</span><span class='mathlingua-whitespace'></span><span class='mathlingua'><span class='mathlingua-argument'>$$$a$$$</span></span><span class='mathlingua-comma'>,</span><span class='mathlingua-whitespace'></span><span class='mathlingua'><span class='mathlingua-argument'>$$$b$$$</span></span></span><br/><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-header'>suchThat:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement--1579033324687399770-CUSTOM_SUFFIX')"><span class='mathlingua-statement' title='a, b is \integer'>$$$a, b$$$<span class='mathlingua-whitespace'></span><span class='mathlingua-is'>is</span><span class='mathlingua-whitespace'></span>$$$\textrm{integer}$$$</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement--1579033324687399770-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer', 'statement--1579033324687399770-CUSTOM_SUFFIX')">\integer</a></div></span></span></span><br/><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-header'>then:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class='mathlingua-header'>if:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement--6211756090018635613-CUSTOM_SUFFIX')"><span class='mathlingua-statement' title='p | a*b'>$$$p | a b$$$</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement--6211756090018635613-CUSTOM_SUFFIX'></div></span></span></span><br/><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-header'>then:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class='mathlingua-header'>or:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement--3742543804454569574-CUSTOM_SUFFIX')"><span class='mathlingua-statement' title='p | a'>$$$p | a$$$</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement--3742543804454569574-CUSTOM_SUFFIX'></div></span><br/><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement-6796782890737903250-CUSTOM_SUFFIX')"><span class='mathlingua-statement' title='p | b'>$$$p | b$$$</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement-6796782890737903250-CUSTOM_SUFFIX'></div></span></span></span></span></span></span></span></span></span></span></span></span><br/><span class='mathlingua'><span class='mathlingua-header'>using:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement--9091921402663802673-CUSTOM_SUFFIX')"><span class="mathlingua-statement">a * b := a \integer.*/ b</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement--9091921402663802673-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer.*', 'statement--9091921402663802673-CUSTOM_SUFFIX')">\integer.*</a></div><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement--9091921402663802672-CUSTOM_SUFFIX')"><span class="mathlingua-statement">a | b := a \integer.|/ b</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement--9091921402663802672-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer.|', 'statement--9091921402663802672-CUSTOM_SUFFIX')">\integer.|</a></div><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement--9091921402663802671-CUSTOM_SUFFIX')"><span class="mathlingua-statement">a > b := a \integer.>/ b</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement--9091921402663802671-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer.>', 'statement--9091921402663802671-CUSTOM_SUFFIX')">\integer.></a></div></span><br/><span class='mathlingua'><span class='mathlingua-header'>written:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span>"\textrm{prime}"</span><br/><span class='mathlingua'></span><div class='end-mathlingua-top-level'></div></div></div></span></span></div><div id='literal-60f895a9-3c56-4d1f-a3f2-32cba14e4dc7' class='mathlingua-literal-hidden'><span class='mathlingua'><div id='aa6dfbbf-d2af-402e-8b9b-3cfb1c4c7eb2-CUSTOM_SUFFIX'><div class='mathlingua-top-level'><span class='mathlingua-id'>[\prime]</span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>Defines:</span><span class='mathlingua-whitespace'></span><span class='mathlingua'><span class='mathlingua-argument-no-render'>p</span></span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>means:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement-4431355393409503913-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'p is \integer'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement-4431355393409503913-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer', 'statement-4431355393409503913-CUSTOM_SUFFIX')">\integer</a></div></span><br/><span class='mathlingua'><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement-4041154182999246661-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'p > 1'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement-4041154182999246661-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('>', 'statement-4041154182999246661-CUSTOM_SUFFIX')">></a></div></span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class='mathlingua-header-literal'>forAll:</span><span class='mathlingua-whitespace'></span><span class='mathlingua'><span class='mathlingua-argument-no-render'>a</span></span><span class='mathlingua-comma'>,</span><span class='mathlingua-whitespace'></span><span class='mathlingua'><span class='mathlingua-argument-no-render'>b</span></span></span><br/><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-header-literal'>suchThat:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement-5935907617527704992-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'a, b is \integer'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement-5935907617527704992-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer', 'statement-5935907617527704992-CUSTOM_SUFFIX')">\integer</a></div></span></span></span><br/><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-header-literal'>then:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class='mathlingua-header-literal'>if:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement--4175138667277918518-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'p | a*b'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement--4175138667277918518-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('|', 'statement--4175138667277918518-CUSTOM_SUFFIX')">|</a><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('*', 'statement--4175138667277918518-CUSTOM_SUFFIX')">*</a></div></span></span></span><br/><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-header-literal'>then:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class='mathlingua-header-literal'>or:</span><br/><span class='mathlingua'><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement-1889905589711989384-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'p | a'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement-1889905589711989384-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('|', 'statement-1889905589711989384-CUSTOM_SUFFIX')">|</a></div></span><br/><span class='mathlingua'><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-whitespace'></span><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement--3473148638659211969-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'p | b'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement--3473148638659211969-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('|', 'statement--3473148638659211969-CUSTOM_SUFFIX')">|</a></div></span></span></span></span></span></span></span></span></span></span></span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>using:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement--8246905282045298275-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'a * b := a \integer.*/ b'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement--8246905282045298275-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('*', 'statement--8246905282045298275-CUSTOM_SUFFIX')">*</a><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer.*', 'statement--8246905282045298275-CUSTOM_SUFFIX')">\integer.*</a></div><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement--8246905282045298274-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'a | b := a \integer.|/ b'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement--8246905282045298274-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('|', 'statement--8246905282045298274-CUSTOM_SUFFIX')">|</a><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer.|', 'statement--8246905282045298274-CUSTOM_SUFFIX')">\integer.|</a></div><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><div class='mathlingua-statement-container' onclick="mathlinguaToggleDropdown('statement--8246905282045298273-CUSTOM_SUFFIX')"><span class="mathlingua-statement-no-render">'a > b := a \integer.>/ b'</span></div><div class='mathlingua-dropdown-menu-hidden' id='statement--8246905282045298273-CUSTOM_SUFFIX'><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('>', 'statement--8246905282045298273-CUSTOM_SUFFIX')">></a><a class='mathlingua-dropdown-menu-item' onclick="mathlinguaViewSignature('\\integer.>', 'statement--8246905282045298273-CUSTOM_SUFFIX')">\integer.></a></div></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>written:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class="literal-mathlingua-text-no-render"> "\textrm{prime}" </span></span><br/><span class='mathlingua'><span class='mathlingua-header-literal'>called:</span><br/><span class='mathlingua-dot'>.</span><span class='mathlingua-whitespace'></span><span class="literal-mathlingua-text-no-render"> "prime" </span></span><div class='end-mathlingua-top-level'></div></div></div></span></div></div></div><div class='mathlingua-block-comment-top-level'><span class='mathlingua'><span class='mathlingua-block-comment'>  <ul><li>Describe difference between structure and statement language and say will get to more details later</li><li>Show using text and statement</li><li>Show how rendering works</li><li>Show definition and theorem</li><li>Show how written and called works</li></ul> 
+ </span></span></div>
+        </div>
+    </body>
