@@ -1,12 +1,4 @@
 
-[\function:on{A}:to{B}]
-Defines: f(x)
-means: "a function"
-written: "f? : A? \rightarrow B?"
-called: "A function on $A?$ to $B?$"
-
-
-
 [\closed.interval{a, b}]
 Defines: I
 means: "closed interval"
